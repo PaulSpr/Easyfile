@@ -17,6 +17,9 @@ class Easyfile extends Model
 
 	private $tempFile;
 
+	public static $tokenLength		= 8; // if the offset is 0, maxlength can be 32
+	public static $tokenOffset		= 8;
+
 	// defaults
 	protected $attributes = [
 		'instance_id' => 0,
@@ -102,7 +105,7 @@ class Easyfile extends Model
 
 	public function downloadUrl(){
 		$params = $this->attributes;
-		$params['token'] = 'abc';
+		$params['token'] = self::generateToken($this->id, $this->filename, $this->size);
 
 		$url = self::buildLocation(self::$downloadUrl, $params);
 
@@ -113,10 +116,19 @@ class Easyfile extends Model
 	public static function respondWithDownload( $id, $token, $name=null, $header=[] ){
 		$file = self::find($id);
 
+		if( $token != self::generateToken( $file->id,$file->filename, $file->size) ){
+			abort(404);
+		}
+
 		$pathToFile = self::buildLocation(storage_path(self::$storageLocation), $file->attributes);
 		$pathToFile = str_replace('//', '/', $pathToFile);
 		//dd($pathToFile);
 		return response()->download($pathToFile);
+	}
+
+	private static function generateToken($id, $filename, $filesize){
+		$fullToken = md5($filename.$filesize.$id.$_ENV['APP_KEY']);
+		return substr($fullToken, self::$tokenOffset, self::$tokenLength);
 	}
 
 
