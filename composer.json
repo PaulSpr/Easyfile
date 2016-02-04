@@ -1,0 +1,19 @@
+{
+	"name": "interactivestudios/easyfile",
+	"description": "EasyFile is a model for file uploads and can be subclassed for easy file handling and downloads.",
+	"authors": [
+		{
+			"name": "Paul Sprangers",
+			"email": "paul@interactivestudios.nl"
+		}
+	],
+	"require": {
+		"php": ">=5.3.0"
+	},
+	"autoload": {
+		"psr-0": {
+			"InteractiveStudios\\EasyFile\\": "src/"
+		}
+	},
+	"minimum-stability": "stable"
+}
