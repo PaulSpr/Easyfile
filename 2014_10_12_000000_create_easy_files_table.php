@@ -20,6 +20,11 @@ class CreateEasyFilesTable extends Migration
             $table->string('extension');
             $table->string('mimetype');
             $table->boolean('public');
+            // for relations
+            $table->integer('hasfile_id');
+            $table->string('hasfile_type');
+            $table->string('hasfile_attribute');
+
             $table->timestamps();
         });
     }

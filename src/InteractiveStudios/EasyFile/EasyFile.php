@@ -1,4 +1,5 @@
 <?php
+
 namespace InteractiveStudios\EasyFile;
 
 use Illuminate\Database\Eloquent\Model;
@@ -30,14 +31,25 @@ class Easyfile extends Model
 		parent::boot();
 
 		// handler after save so all info to store the file
-		Easyfile::created(function($file){
+		self::created(function($file){
 			if( $file->hasTempFile()) {
-				$location = self::buildLocation(storage_path(self::$storageLocation), $file->attributes);
-				$location = str_replace('//', '/', $location);
+
+				$location = $file->buildLocationInst(storage_path($file::$storageLocation), $file->attributes);
 
 				$location = $file->checkAndCreateDir($location);
-				$file->tempFile->move($location, $file->filename);
+
+				// only save file if location doesn't exist (in case a double save is performed
+				if( $location ) {
+					$file->getTempFile()->move($location, $file->filename);
+				}
 			}
+		});
+
+		// handler to remove the file from disk when the model is deleted
+		self::deleting(function($file){
+			$location = $file->buildLocationInst(storage_path($file::$storageLocation), $file->attributes);
+			$writeDir = pathinfo($location)['dirname'];
+			File::deleteDirectory($writeDir);
 		});
 	}
 
@@ -80,16 +92,27 @@ class Easyfile extends Model
 		return ( $this->tempFile ? true : false );
 	}
 
+	public function getTempFile(){
+		return $this->tempFile;
+	}
 
-	private static function buildLocation( $location, $params )
+
+	public static function buildLocation( $location, $params )
 	{
 		foreach( $params as $name => $value ){
 			$location = str_ireplace('{'.$name.'}', $value, $location);
 		}
+		$location = str_replace('//', '/', $location);
 		return $location;
 	}
 
-	private function checkAndCreateDir( $location )
+	public function buildLocationInst( $location, $params )
+	{
+		return self::buildLocation( $location, $params );
+	}
+
+
+	public function checkAndCreateDir( $location )
 	{
 		// first check if exists
 		$writeDir = pathinfo($location)['dirname'];
@@ -97,6 +120,9 @@ class Easyfile extends Model
 		if (!File::exists($writeDir)) {
 			// make dir
 			File::makeDirectory($writeDir, 0777, true);
+		}
+		else{
+			return false;
 		}
 
 		return $writeDir;
@@ -121,7 +147,7 @@ class Easyfile extends Model
 		}
 
 		$pathToFile = self::buildLocation(storage_path(self::$storageLocation), $file->attributes);
-		$pathToFile = str_replace('//', '/', $pathToFile);
+
 		//dd($pathToFile);
 		return response()->download($pathToFile);
 	}
