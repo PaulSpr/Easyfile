@@ -105,7 +105,7 @@ class Easyfile extends Model
 
 	public function downloadUrl(){
 		$params = $this->attributes;
-		$params['token'] = self::generateToken($this->id, $this->filename, $this->size);
+		$params['token'] = self::generateToken($this->id, $this->filename, $this->created_at);
 
 		$url = self::buildLocation(self::$downloadUrl, $params);
 
@@ -116,7 +116,7 @@ class Easyfile extends Model
 	public static function respondWithDownload( $id, $token, $name=null, $header=[] ){
 		$file = self::find($id);
 
-		if( $token != self::generateToken( $file->id,$file->filename, $file->size) ){
+		if( $token != self::generateToken( $file->id,$file->filename, $file->created_at) ){
 			abort(404);
 		}
 
